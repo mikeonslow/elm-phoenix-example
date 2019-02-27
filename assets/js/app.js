@@ -19,5 +19,6 @@ import css from "../css/app.css"
 import { Elm } from "../src/Main.elm";
 
 var app = Elm.Main.init({
-    node: document.getElementById('elm-main')
+    node: document.getElementById('elm-main'),
+    flags: { "apiUrl": "https://www.mocky.io/v2/5c76d3833200003521f463f9" }
 });

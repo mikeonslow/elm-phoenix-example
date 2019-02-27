@@ -7,7 +7,12 @@ use Mix.Config
 # watchers to your application. For example, we use it
 # with webpack to recompile .js and .css sources.
 config :elmfolio, ElmfolioWeb.Endpoint,
-  http: [port: 4000],
+  https: [
+   port: 4000,
+   keyfile: "dev.key",
+   certfile: "dev.crt"
+  ],
+  force_ssl: [hsts: true],
   debug_errors: true,
   code_reloader: true,
   check_origin: false,

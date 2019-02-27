@@ -19,7 +19,7 @@ defmodule Elmfolio.MixProject do
   def application do
     [
       mod: {Elmfolio.Application, []},
-      extra_applications: [:logger, :runtime_tools, :httpoison]
+      extra_applications: [:logger, :runtime_tools, :httpoison, :ssl]
     ]
   end
 

@@ -14,5 +14,3 @@ defmodule Elmfolio.Portfolio do
     {code, responseBody |> Jason.decode!()}
   end
 end
-
-# Elmfolio.Portfolio.list()

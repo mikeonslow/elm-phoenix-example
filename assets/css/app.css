@@ -1,3 +1,33 @@
 /* This file is for your main application css. */
 
 @import "./phoenix.css";
+
+.content {
+    width: 960px;
+    margin: 0 auto;
+    padding: 30px;
+    text-align: center;
+    font-family: Helvetica, Arial, serif;
+}
+
+header {
+    position: relative;
+    padding: 6px 12px;
+    height: 36px;
+}
+
+h1 {
+    color: #5A6477;
+    font-weight: normal;
+    margin: 0;
+}
+
+.logo {
+    width: 280px;
+}
+
+.intro-message {
+    padding: 48px;
+    font-size: 48px;
+    text-align: center;
+}

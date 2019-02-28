@@ -8,6 +8,16 @@ defmodule ElmfolioWeb.PortfolioChannel do
   end
 
   def handle_in("get_items", _payload, socket) do
-    {:reply, Elmfolio.Portfolio.list(), socket}
+    Elmfolio.Portfolio.list() |> respond(socket)
+  end
+
+  defp respond({:ok, items}, socket) do
+    push(socket, "get_items", %{code: 200, response: items})
+    {:noreply, socket}
+  end
+
+  defp respond({_, items}, socket) do
+    push(socket, "get_items", %{code: 500, response: items})
+    {:noreply, socket}
   end
 end

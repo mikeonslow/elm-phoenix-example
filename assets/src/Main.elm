@@ -1,4 +1,4 @@
-module Main exposing (Category, Item, Model, Msg(..), Portfolio, categoryDecoder, getPortfolio, getSelectedCategoryId, getSelectedItem, init, initialModel, itemDecoder, main, portfolioDecoder, subscriptions, update, view, viewCategoryButton, viewCategoryNavbar, viewError, viewItem, viewItems, viewSelectedItem)
+port module Main exposing (Category, Item, Model, Msg(..), Portfolio, categoryDecoder, getPortfolioFromChannel, getSelectedCategoryId, getSelectedItem, init, initialModel, itemDecoder, main, portfolioDecoder, subscriptions, update, view, viewCategoryButton, viewCategoryNavbar, viewError, viewItem, viewItems, viewSelectedItem)
 
 import Browser
 import Html exposing (..)
@@ -7,6 +7,7 @@ import Html.Events exposing (onClick)
 import Http
 import Json.Decode as Decode exposing (Decoder, Value)
 import Json.Decode.Pipeline as Pipeline exposing (optional, required)
+import Json.Encode as Encode
 
 
 
@@ -56,6 +57,14 @@ type alias Item =
     , description : String
     , overlayColor : String
     }
+
+
+type alias GetItemRequest =
+    {}
+
+
+type alias ChannelResponse =
+    { code : Int, response : Portfolio }
 
 
 
@@ -210,7 +219,7 @@ This update function responds to messages (`Msg`), updating the model and return
 
 
 type Msg
-    = ApiResponse (Result Http.Error Portfolio)
+    = HandleChannelResponse ChannelResponse
     | CategoryClicked Int
     | ItemClicked Int
     | None
@@ -219,21 +228,19 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ApiResponse response ->
-            case response of
-                Ok portfolio ->
-                    let
-                        updatedModel =
-                            { model | portfolio = portfolio }
-                    in
-                    ( updatedModel, Cmd.none )
+        HandleChannelResponse channelResponse ->
+            let
+                { code, response } = channelResponse
 
-                Err error ->
-                    let
-                        updatedModel =
-                            { model | errorMessage = "An error occurred while attempted to fetch your portfolio" }
-                    in
-                    ( updatedModel, Cmd.none )
+                updatedModel =
+                    case (code, response) of
+                        (200, portfolio) ->
+                            { model | portfolio = portfolio }
+
+                        _ ->
+                            model
+            in
+            ( updatedModel, Cmd.none )
 
         CategoryClicked categoryId ->
             let
@@ -258,13 +265,8 @@ update msg model =
             ( model, Cmd.none )
 
 
-
--- Http
-
-
-getPortfolio : String -> Cmd Msg
-getPortfolio url =
-    Http.send ApiResponse (Http.get url portfolioDecoder)
+getPortfolioFromChannel =
+    channelEventRequest {}
 
 
 
@@ -333,6 +335,12 @@ apiUrl =
     "https://www.mocky.io/v2/5c77106130000059009d6136"
 
 
+port channelEventRequest : GetItemRequest -> Cmd msg
+
+
+port channelEventResponse : (ChannelResponse -> msg) -> Sub msg
+
+
 
 {--Subscriptions
 In Elm, using subscriptions is how your application can listen for external input. Some examples are:
@@ -345,8 +353,12 @@ In this application, we don't have a need for any active subscriptions so we add
 --}
 
 
-subscriptions =
-    \_ -> Sub.none
+subscriptions _ =
+    Sub.batch [ channelEventResponse receiveChannelEventReponse ]
+
+
+receiveChannelEventReponse response =
+    HandleChannelResponse response
 
 
 
@@ -374,4 +386,6 @@ up. For now, we don't need to run any commands so we'll use Cmd.none here.
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( initialModel apiUrl, getPortfolio apiUrl )
+    ( initialModel apiUrl
+    , getPortfolioFromChannel
+    )

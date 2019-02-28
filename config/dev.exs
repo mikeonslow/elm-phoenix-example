@@ -9,10 +9,10 @@ use Mix.Config
 config :elmfolio, ElmfolioWeb.Endpoint,
   http: [port: 4000],
   https: [
-   port: 4001,
-   cipher_suite: :strong,
-   certfile: "priv/cert/selfsigned.pem",
-   keyfile: "priv/cert/selfsigned_key.pem"
+    port: 4001,
+    cipher_suite: :strong,
+    certfile: "priv/cert/selfsigned.pem",
+    keyfile: "priv/cert/selfsigned_key.pem"
   ],
   debug_errors: true,
   code_reloader: true,

@@ -14,10 +14,33 @@ import css from "../css/app.css"
 // Import local files
 //
 // Local files can be imported directly using relative paths, for example:
-// import socket from "./socket"
+import socket from "./socket"
 
 import { Elm } from "../src/Main.elm";
 
-var app = Elm.Main.init({
-    node: document.getElementById('elm-main')
-});
+(function () {
+    var startup = function () {
+        // Start the Elm App.
+        var app = Elm.Main.init({
+            node: document.getElementById('elm-main')
+        });
+
+        app.ports.channelEventRequest.subscribe((request) => {
+            console.log("request", request);
+            channel.push("get_items", request);
+        });
+
+        let channel = socket.channel("portfolio:lobby", {});
+
+        channel.join()
+            .receive("ok", resp => { console.log("Joined successfully", resp) })
+            .receive("error", resp => { console.log("Unable to join", resp) });
+
+        channel.on("get_items", payload => {
+            console.log("get_items response");
+            app.ports.channelEventResponse.send(payload);
+        })
+    }
+
+    window.addEventListener('load', startup, false);
+}());

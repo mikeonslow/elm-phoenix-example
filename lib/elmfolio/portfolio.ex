@@ -2,7 +2,7 @@ defmodule Elmfolio.Portfolio do
   use HTTPoison.Base
 
   @headers ["content-type": "application/json"]
-  @url "https://www.mocky.io/v2/59f8cfa92d0000891dad41ed"
+  @url "https://www.mocky.io/v2/5c77106130000059009d6136"
   @options [ssl: [{:versions, [:"tlsv1.2"]}], recv_timeout: 500]
 
   def list() do

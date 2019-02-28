@@ -329,6 +329,10 @@ getSelectedItem { portfolio, selectedItemId } selectedCategoryId =
                 |> List.head
 
 
+apiUrl =
+    "https://www.mocky.io/v2/5c77106130000059009d6136"
+
+
 
 {--Subscriptions
 In Elm, using subscriptions is how your application can listen for external input. Some examples are:
@@ -368,6 +372,6 @@ up. For now, we don't need to run any commands so we'll use Cmd.none here.
 --}
 
 
-init : { apiUrl : String } -> ( Model, Cmd Msg )
-init flags =
-    ( initialModel flags.apiUrl, getPortfolio flags.apiUrl )
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( initialModel apiUrl, getPortfolio apiUrl )

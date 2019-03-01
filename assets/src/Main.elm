@@ -2,13 +2,13 @@ port module Main exposing (Category, Item, Model, Msg(..), Portfolio, categoryDe
 
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, classList, href, src, target, type_, width)
+import Html.Attributes exposing (attribute, class, classList, href, src, target, type_, width, style)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as Decode exposing (Decoder, Value)
 import Json.Decode.Pipeline as Pipeline exposing (optional, required)
 import Json.Encode as Encode
-
+import Set
 
 {--Model
 The `initialModel` function initializes our `Model`. This function is called in `init` and outputs a `Model`
@@ -24,6 +24,7 @@ initialModel url =
         }
     , selectedCategoryId = Nothing
     , selectedItemId = Nothing
+    , likedItems = []
     }
 
 
@@ -32,6 +33,7 @@ type alias Model =
     , portfolio : Portfolio
     , selectedCategoryId : Maybe Int
     , selectedItemId : Maybe Int
+    , likedItems : List (Int, Int)
     }
 
 
@@ -53,6 +55,7 @@ type alias Item =
     , linkUrl : String
     , description : String
     , overlayColor : String
+    , likes : Int
     }
 
 
@@ -145,10 +148,10 @@ viewCategoryButton selectedCategoryId category =
 
 
 viewItems : Model -> Int -> Maybe Item -> Html Msg
-viewItems { portfolio, errorMessage } selectedCategoryId selectedItemId =
+viewItems { portfolio, errorMessage, likedItems } selectedCategoryId selectedItemId =
     let
         filteredItems =
-            portfolio.items |> List.filter (\i -> i.categoryId == selectedCategoryId) |> List.map viewItem
+            portfolio.items |> List.filter (\i -> i.categoryId == selectedCategoryId) |> List.map (viewItem likedItems)
 
         contents =
             if String.isEmpty errorMessage then
@@ -160,17 +163,32 @@ viewItems { portfolio, errorMessage } selectedCategoryId selectedItemId =
     contents
 
 
-viewItem : Item -> Html Msg
-viewItem item =
+viewItem : List (Int, Int) -> Item -> Html Msg
+viewItem likedItems item =
+    let
+        iconset =
+            if List.member (item.categoryId, item.id) likedItems then
+                "fas"
+            else
+                "far"
+    in
     div
         [ class "col-4 item-panel" ]
-        [ img
-            [ src item.imageUrl
+        [ span [ style "display" "inline-blockw"] [ 
+            img [ src item.imageUrl
             , class "img-fluid"
             , onClick (ItemClicked item.id)
+            ] []
+            , span [ class "badge badge-info like-box", onClick (ItemLiked item.id)][
+                i [ class <| iconset ++ " fa-heart" ] []
+                , text <| " " ++ (String.fromInt item.likes)
             ]
-            []
+
+
         ]
+            
+        ]
+
 
 
 viewSelectedItem : Maybe Item -> Html msg
@@ -217,6 +235,7 @@ type Msg
     = HandleChannelResponse ChannelResponse
     | CategoryClicked Int
     | ItemClicked Int
+    | ItemLiked Int
     | None
 
 
@@ -231,7 +250,10 @@ update msg model =
                 updatedModel =
                     case (code, response) of
                         (200, portfolio) ->
-                            { model | portfolio = portfolio }
+                            { model 
+                                | portfolio = portfolio
+                                , selectedCategoryId = Just <| getSelectedCategoryId model
+                            }
 
                         _ ->
                             model
@@ -254,6 +276,22 @@ update msg model =
                     { model
                         | selectedItemId = Just itemId
                     }
+            in
+            ( updatedModel, Cmd.none )
+
+        ItemLiked itemId ->
+            let
+                updatedLikedItems selectedCategoryId =
+                    (selectedCategoryId, itemId) :: model.likedItems
+                        |> Set.fromList
+                        |> Set.toList
+
+                updatedModel =
+                    case model.selectedCategoryId of
+                        Just selectedCategoryId ->
+                            { model | likedItems = updatedLikedItems selectedCategoryId }
+                        Nothing ->
+                            model
             in
             ( updatedModel, Cmd.none )
 
@@ -293,26 +331,14 @@ itemDecoder =
         |> required "linkUrl" Decode.string
         |> required "description" Decode.string
         |> required "overlayColor" Decode.string
+        |> required "likes" Decode.int
+
 
 
 getSelectedCategoryId : Model -> Int
-getSelectedCategoryId { portfolio, selectedCategoryId } =
-    let
-        firstCategory =
-            portfolio.categories
-                |> List.head
-                |> Maybe.map .id
-                |> Maybe.withDefault 1
-
-        updatedSelectedCategoryId =
-            case selectedCategoryId of
-                Nothing ->
-                    firstCategory
-
-                Just selected ->
-                    selected
-    in
-    updatedSelectedCategoryId
+getSelectedCategoryId model =
+    model.selectedCategoryId 
+        |> Maybe.withDefault (getFirstCategory model)
 
 
 getSelectedItem : Model -> Int -> Maybe Item
@@ -326,6 +352,11 @@ getSelectedItem { portfolio, selectedItemId } selectedCategoryId =
                 |> List.filter (\i -> i.id == id && i.categoryId == selectedCategoryId)
                 |> List.head
 
+getFirstCategory { portfolio } =
+    portfolio.categories
+        |> List.head
+        |> Maybe.map .id
+        |> Maybe.withDefault 1
 
 apiUrl =
     "https://www.mocky.io/v2/5c77106130000059009d6136"

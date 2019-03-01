@@ -24,7 +24,6 @@ initialModel url =
         }
     , selectedCategoryId = Nothing
     , selectedItemId = Nothing
-    , apiUrl = url
     }
 
 
@@ -33,7 +32,6 @@ type alias Model =
     , portfolio : Portfolio
     , selectedCategoryId : Maybe Int
     , selectedItemId : Maybe Int
-    , apiUrl : String
     }
 
 

@@ -11,11 +11,11 @@ defmodule ElmfolioWeb.PortfolioChannel do
     Elmfolio.Portfolio.Api.get() |> respond(socket)
   end
 
-  def handle_in("like_item", %{ "categoryId" => categoryId, "itemId" => itemId }, socket) do
-    Elmfolio.Portfolio.Api.get() |> respond(socket)
+  def handle_in("like_item", %{"categoryId" => categoryId, "itemId" => itemId}, socket) do
+    "item_liked"
   end
 
-  defp respond({:ok, items}, socket) do
+  defp respond({200, items}, socket) do
     push(socket, "get_items", %{code: 200, response: items})
     {:noreply, socket}
   end

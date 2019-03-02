@@ -10,7 +10,8 @@ defmodule Elmfolio.Portfolio.Api do
     |> handle_response()
   end
 
-  defp handle_response({_, %HTTPoison.Response{status_code: responseCode, body: responseBody}}) when responseCode == 200 do
+  defp handle_response({_, %HTTPoison.Response{status_code: responseCode, body: responseBody}})
+       when responseCode == 200 do
     {responseCode, responseBody |> Jason.decode!()}
   end
 
@@ -19,7 +20,7 @@ defmodule Elmfolio.Portfolio.Api do
   end
 end
 
-
 defmodule Elmfolio.Portfolio do
+  @derive {Jason.Encoder, only: [:categories, :items]}
   defstruct categories: [], items: []
 end

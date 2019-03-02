@@ -10,7 +10,7 @@ defmodule Elmfolio.Application do
     children = [
       # Start the endpoint when the application starts
       ElmfolioWeb.Endpoint,
-      Portfolio.Server
+      Elmfolio.Portfolio.Server
       # Starts a worker by calling: Elmfolio.Worker.start_link(arg)
       # {Elmfolio.Worker, arg},
     ]

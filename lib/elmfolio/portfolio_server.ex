@@ -1,22 +1,27 @@
-defmodule Portfolio.Server do
-  use GenServer, Elmfolio
+defmodule Elmfolio.Portfolio.Server do
+  use GenServer
 
-  # Portfolio.Server.list
+  # Elmfolio.Portfolio.Server.list
 
   def start_link(_args) do
-    GenServer.start_link(__MODULE__, struct(Portfolio), name: __MODULE__)
+    GenServer.start_link(__MODULE__, struct(Elmfolio.Portfolio), name: __MODULE__)
   end
 
   # Callbacks
 
   @impl true
   def init(portfolio) do
+    Process.send_after(
+        self(),
+        :hydrate,
+        1000
+    )
     {:ok, portfolio}
   end
 
   @impl true
-  def handle_call(:pop, _from, [head | tail]) do
-    {:reply, head, tail}
+  def handle_info(:hydrate, _state) do
+    {:noreply, hydrate_portfolio}
   end
 
   @impl true
@@ -24,18 +29,20 @@ defmodule Portfolio.Server do
     {:reply, state, state}
   end
 
-  @impl true
-  def handle_cast({:push, item}, state) do
-    {:noreply, [item | state]}
-  end
-
-  def push do
-    __MODULE__
-    |> GenServer.cast({:push, "item"})
-  end
-
   def list do
     __MODULE__
     |> GenServer.call(:list)
+  end
+
+  defp hydrate_portfolio do
+    Elmfolio.Portfolio.Api.get() |> hydrate_portfolio
+  end
+
+  defp hydrate_portfolio({200, %{ "categories" => _categories, "items" => _items} = portfolio}) do
+    portfolio
+  end
+
+  defp hydrate_portfolio(_data) do
+    struct(Elmfolio.Portfolio)
   end
 end

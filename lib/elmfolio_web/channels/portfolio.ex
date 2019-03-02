@@ -8,10 +8,10 @@ defmodule ElmfolioWeb.PortfolioChannel do
   end
 
   def handle_in("get_items", _payload, socket) do
-    Elmfolio.Portfolio.Api.get() |> respond(socket)
+    Elmfolio.Portfolio.Server.get() |> respond(socket)
   end
 
-  def handle_in("like_item", %{"categoryId" => categoryId, "itemId" => itemId}, socket) do
+  def handle_in("like_item", %{"categoryId" => _categoryId, "itemId" => _itemId}, _socket) do
     "item_liked"
   end
 

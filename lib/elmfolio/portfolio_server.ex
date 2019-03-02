@@ -12,10 +12,11 @@ defmodule Elmfolio.Portfolio.Server do
   @impl true
   def init(portfolio) do
     Process.send_after(
-        self(),
-        :hydrate,
-        1000
+      self(),
+      :hydrate,
+      0
     )
+
     {:ok, portfolio}
   end
 
@@ -38,11 +39,11 @@ defmodule Elmfolio.Portfolio.Server do
     Elmfolio.Portfolio.Api.get() |> hydrate_portfolio
   end
 
-  defp hydrate_portfolio({200, %{ "categories" => _categories, "items" => _items} = portfolio}) do
-    portfolio
+  defp hydrate_portfolio({200, %{"categories" => _categories, "items" => _items} = portfolio}) do
+    {200, portfolio}
   end
 
   defp hydrate_portfolio(_data) do
-    struct(Elmfolio.Portfolio)
+    {500, struct(Elmfolio.Portfolio)}
   end
 end

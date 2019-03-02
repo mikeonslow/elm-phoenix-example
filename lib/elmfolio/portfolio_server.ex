@@ -36,8 +36,8 @@ defmodule Elmfolio.Portfolio.Server do
         _from,
         state
       ) do
-    state |> like_item(itemAndCategoryIds)
-    {:reply, state, state}
+    updatedState = state |> like_item(itemAndCategoryIds)
+    {:reply, updatedState, updatedState}
   end
 
   @impl true
@@ -63,14 +63,16 @@ defmodule Elmfolio.Portfolio.Server do
   end
 
   defp like_item(
-         {200, portfolio},
+         {200, %{"categories" => categories, "items" => items} = portfolio},
          %{"categoryId" => categoryId, "itemId" => itemId} = categoryAndItemIds
        ) do
-    %{"categories" => categories, "items" => items} = portfolio
-
-    updatedItems = items |> Enum.map(&update_item_likes(&1, categoryAndItemIds)) |> IO.inspect()
-
-    {200, %{portfolio | items: updatedItems}}
+    {200,
+     %{
+       portfolio
+       | "items" =>
+           items
+           |> Enum.map(&update_item_likes(&1, categoryAndItemIds))
+     }}
   end
 
   defp like_item({500, portfolio} = state, _categoryAndItemId) do
@@ -78,16 +80,14 @@ defmodule Elmfolio.Portfolio.Server do
   end
 
   defp update_item_likes(
-         %{"id" => itemId, "categoryId" => categoryId} = item,
+         %{"id" => itemId, "categoryId" => categoryId, "likes" => currentLikes} = item,
          %{"categoryId" => likeCategoryId, "itemId" => likeItemId}
        )
        when likeCategoryId == categoryId and likeItemId == itemId do
-    # newLikes = item.likes + 1
-    item |> IO.inspect()
-    Map.put(item, :likes, 2)
+    %{item | "likes" => currentLikes + 1} |> IO.inspect()
   end
 
-  defp update_item_likes({_args, item}) do
+  defp update_item_likes(item, _categoryAndItemId) do
     item
   end
 

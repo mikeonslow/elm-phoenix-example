@@ -11,8 +11,7 @@ defmodule ElmfolioWeb.PortfolioChannel do
     Elmfolio.Portfolio.Server.get() |> respond(socket)
   end
 
-  def handle_in("like_item", %{"categoryId" => _categoryId, "itemId" => _itemId}, _socket) do
-    
+  def handle_in("like_item", %{"categoryId" => _categoryId, "itemId" => _itemId} = items, socket) do
     push(socket, "like_item", %{code: 200, response: items})
     {:noreply, socket}
   end

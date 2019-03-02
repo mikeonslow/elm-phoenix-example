@@ -12,7 +12,9 @@ defmodule ElmfolioWeb.PortfolioChannel do
   end
 
   def handle_in("like_item", %{"categoryId" => _categoryId, "itemId" => _itemId}, _socket) do
-    "like_item"
+    
+    push(socket, "like_item", %{code: 200, response: items})
+    {:noreply, socket}
   end
 
   def handle_in("unlike_item", %{"categoryId" => _categoryId, "itemId" => _itemId}, _socket) do

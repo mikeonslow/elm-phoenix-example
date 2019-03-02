@@ -9,7 +9,8 @@ defmodule Elmfolio.Application do
     # List all child processes to be supervised
     children = [
       # Start the endpoint when the application starts
-      ElmfolioWeb.Endpoint
+      ElmfolioWeb.Endpoint,
+      Portfolio.Server
       # Starts a worker by calling: Elmfolio.Worker.start_link(arg)
       # {Elmfolio.Worker, arg},
     ]

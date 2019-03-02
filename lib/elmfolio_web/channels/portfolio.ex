@@ -11,13 +11,27 @@ defmodule ElmfolioWeb.PortfolioChannel do
     Elmfolio.Portfolio.Server.get() |> respond(socket)
   end
 
-  def handle_in("like_item", %{"categoryId" => _categoryId, "itemId" => _itemId} = items, socket) do
-    push(socket, "like_item", %{code: 200, response: items})
+  def handle_in(
+        "like_item",
+        %{"categoryId" => _categoryId, "itemId" => _itemId} = categoryAndItemId,
+        socket
+      ) do
+    Elmfolio.Portfolio.Server
+    |> GenServer.call({:like_item, categoryAndItemId})
+    |> push_like_item_response(socket)
+
     {:noreply, socket}
   end
 
   def handle_in("unlike_item", %{"categoryId" => _categoryId, "itemId" => _itemId}, _socket) do
     "unlike_item"
+  end
+
+  defp push_like_item_response({code, response}, socket) do
+    push(socket, "like_item", %{
+      code: code,
+      response: response
+    })
   end
 
   defp respond({200, items}, socket) do

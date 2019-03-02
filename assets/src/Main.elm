@@ -59,8 +59,8 @@ type alias Item =
     }
 
 
-type alias GetItemRequest =
-    {}
+type alias ChannelRequest =
+    { event : String, payload : Encode.Value }
 
 
 type alias ChannelResponse =
@@ -300,7 +300,7 @@ update msg model =
 
 
 getPortfolioFromChannel =
-    channelEventRequest {}
+    channelEventRequest { event = "get_items", payload = Encode.null }
 
 
 
@@ -362,7 +362,7 @@ apiUrl =
     "https://www.mocky.io/v2/5c77106130000059009d6136"
 
 
-port channelEventRequest : GetItemRequest -> Cmd msg
+port channelEventRequest : ChannelRequest -> Cmd msg
 
 
 port channelEventResponse : (ChannelResponse -> msg) -> Sub msg

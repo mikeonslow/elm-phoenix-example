@@ -26,8 +26,7 @@ import { Elm } from "../src/Main.elm";
         });
 
         app.ports.channelEventRequest.subscribe((request) => {
-            console.log("request", request);
-            channel.push("get_items", request);
+            channel.push(request.event, request.payload);
         });
 
         let channel = socket.channel("portfolio:lobby", {});

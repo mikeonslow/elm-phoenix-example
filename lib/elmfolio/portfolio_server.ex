@@ -1,7 +1,7 @@
 defmodule Elmfolio.Portfolio.Server do
   use GenServer
 
-  # Elmfolio.Portfolio.Server.list
+  # Elmfolio.Portfolio.Server.get
 
   def start_link(_args) do
     GenServer.start_link(__MODULE__, struct(Elmfolio.Portfolio), name: __MODULE__)
@@ -25,13 +25,13 @@ defmodule Elmfolio.Portfolio.Server do
   end
 
   @impl true
-  def handle_call(:list, _from, state) do
+  def handle_call(:get, _from, state) do
     {:reply, state, state}
   end
 
-  def list do
+  def get do
     __MODULE__
-    |> GenServer.call(:list)
+    |> GenServer.call(:get)
   end
 
   defp hydrate_portfolio do

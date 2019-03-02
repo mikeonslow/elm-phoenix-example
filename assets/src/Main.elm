@@ -182,7 +182,7 @@ viewItem likedItems item =
                 , onClick (ItemClicked item.id)
                 ]
                 []
-            , span [ class "badge badge-info like-box", onClick (ItemLiked item.id) ]
+            , span [ class "badge badge-info like-box", onClick (ToggleItemLiked item.id) ]
                 [ i [ class <| iconset ++ " fa-heart" ] []
                 , text <| " " ++ String.fromInt item.likes
                 ]
@@ -234,7 +234,7 @@ type Msg
     = HandleChannelResponse ChannelResponse
     | CategoryClicked Int
     | ItemClicked Int
-    | ItemLiked Int
+    | ToggleItemLiked Int
     | None
 
 
@@ -278,27 +278,42 @@ update msg model =
             in
             ( updatedModel, Cmd.none )
 
-        ItemLiked itemId ->
+        ToggleItemLiked itemId ->
             let
-                updatedLikedItems selectedCategoryId =
+                selectedCategoryId =
+                    model.selectedCategoryId |> Maybe.withDefault 0
+
+                itemIsLiked =
+                    model.likedItems
+                        |> List.member
+                            ( selectedCategoryId, itemId )
+
+                ( cmds, updater ) =
+                    if itemIsLiked then
+                        ( unlikeItemChannelRequest selectedCategoryId itemId, removeLikedItem )
+                    else
+                        ( likeItemChannelRequest selectedCategoryId itemId, addLikedItem )
+
+                addLikedItem =
                     ( selectedCategoryId, itemId )
                         :: model.likedItems
-                        |> Set.fromList
-                        |> Set.toList
 
-                ( categoryId, updatedModel ) =
-                    case model.selectedCategoryId of
-                        Just selectedCategoryId ->
-                            ( selectedCategoryId
-                            , { model
-                                | likedItems = updatedLikedItems selectedCategoryId
-                              }
+                removeLikedItem =
+                    model.likedItems
+                        |> List.filter
+                            (\( category, id ) ->
+                                not (selectedCategoryId == category && itemId == id)
                             )
 
-                        Nothing ->
-                            ( 0, model )
+                updatedModel =
+                    case selectedCategoryId of
+                        0 ->
+                            model
+
+                        _ ->
+                            { model | likedItems = updater }
             in
-            ( updatedModel, likeItemChannelRequest categoryId itemId )
+            ( updatedModel, cmds )
 
         None ->
             ( model, Cmd.none )
@@ -311,6 +326,17 @@ getPortfolioFromChannel =
 likeItemChannelRequest categoryId itemId =
     channelEventRequest
         { event = "like_item"
+        , payload =
+            Encode.object
+                [ ( "categoryId", Encode.int categoryId )
+                , ( "itemId", Encode.int itemId )
+                ]
+        }
+
+
+unlikeItemChannelRequest categoryId itemId =
+    channelEventRequest
+        { event = "unlike_item"
         , payload =
             Encode.object
                 [ ( "categoryId", Encode.int categoryId )

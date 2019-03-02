@@ -36,9 +36,13 @@ import { Elm } from "../src/Main.elm";
             .receive("error", resp => { console.log("Unable to join", resp) });
 
         channel.on("get_items", payload => {
-            console.log("get_items response");
+            console.log("get_items response...");
             app.ports.channelEventResponse.send(payload);
-        })
+        });
+
+        channel.on("like_item", payload => {
+            console.log("like_item response", payload);
+        });
     }
 
     window.addEventListener('load', startup, false);

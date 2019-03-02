@@ -28,7 +28,7 @@ defmodule ElmfolioWeb.PortfolioChannel do
   end
 
   defp push_like_item_response({code, response}, socket) do
-    push(socket, "like_item", %{
+    push(socket, "get_items", %{
       code: code,
       response: response
     })

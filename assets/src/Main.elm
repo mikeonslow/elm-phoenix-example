@@ -2,13 +2,14 @@ port module Main exposing (Category, Item, Model, Msg(..), Portfolio, categoryDe
 
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, classList, href, src, target, type_, width, style)
+import Html.Attributes exposing (attribute, class, classList, href, src, style, target, type_, width)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as Decode exposing (Decoder, Value)
 import Json.Decode.Pipeline as Pipeline exposing (optional, required)
 import Json.Encode as Encode
 import Set
+
 
 {--Model
 The `initialModel` function initializes our `Model`. This function is called in `init` and outputs a `Model`
@@ -33,7 +34,7 @@ type alias Model =
     , portfolio : Portfolio
     , selectedCategoryId : Maybe Int
     , selectedItemId : Maybe Int
-    , likedItems : List (Int, Int)
+    , likedItems : List ( Int, Int )
     }
 
 
@@ -163,32 +164,30 @@ viewItems { portfolio, errorMessage, likedItems } selectedCategoryId selectedIte
     contents
 
 
-viewItem : List (Int, Int) -> Item -> Html Msg
+viewItem : List ( Int, Int ) -> Item -> Html Msg
 viewItem likedItems item =
     let
         iconset =
-            if List.member (item.categoryId, item.id) likedItems then
+            if List.member ( item.categoryId, item.id ) likedItems then
                 "fas"
             else
                 "far"
     in
     div
         [ class "col-4 item-panel" ]
-        [ span [ style "display" "inline-blockw"] [ 
-            img [ src item.imageUrl
-            , class "img-fluid"
-            , onClick (ItemClicked item.id)
-            ] []
-            , span [ class "badge badge-info like-box", onClick (ItemLiked item.id)][
-                i [ class <| iconset ++ " fa-heart" ] []
-                , text <| " " ++ (String.fromInt item.likes)
+        [ span [ style "display" "inline-blockw" ]
+            [ img
+                [ src item.imageUrl
+                , class "img-fluid"
+                , onClick (ItemClicked item.id)
+                ]
+                []
+            , span [ class "badge badge-info like-box", onClick (ItemLiked item.id) ]
+                [ i [ class <| iconset ++ " fa-heart" ] []
+                , text <| " " ++ String.fromInt item.likes
+                ]
             ]
-
-
         ]
-            
-        ]
-
 
 
 viewSelectedItem : Maybe Item -> Html msg
@@ -248,9 +247,9 @@ update msg model =
                     channelResponse
 
                 updatedModel =
-                    case (code, response) of
-                        (200, portfolio) ->
-                            { model 
+                    case ( code, response ) of
+                        ( 200, portfolio ) ->
+                            { model
                                 | portfolio = portfolio
                                 , selectedCategoryId = Just <| getSelectedCategoryId model
                             }
@@ -282,18 +281,24 @@ update msg model =
         ItemLiked itemId ->
             let
                 updatedLikedItems selectedCategoryId =
-                    (selectedCategoryId, itemId) :: model.likedItems
+                    ( selectedCategoryId, itemId )
+                        :: model.likedItems
                         |> Set.fromList
                         |> Set.toList
 
-                updatedModel =
+                ( categoryId, updatedModel ) =
                     case model.selectedCategoryId of
                         Just selectedCategoryId ->
-                            { model | likedItems = updatedLikedItems selectedCategoryId }
+                            ( selectedCategoryId
+                            , { model
+                                | likedItems = updatedLikedItems selectedCategoryId
+                              }
+                            )
+
                         Nothing ->
-                            model
+                            ( 0, model )
             in
-            ( updatedModel, Cmd.none )
+            ( updatedModel, likeItemChannelRequest categoryId itemId )
 
         None ->
             ( model, Cmd.none )
@@ -301,6 +306,17 @@ update msg model =
 
 getPortfolioFromChannel =
     channelEventRequest { event = "get_items", payload = Encode.null }
+
+
+likeItemChannelRequest categoryId itemId =
+    channelEventRequest
+        { event = "like_item"
+        , payload =
+            Encode.object
+                [ ( "categoryId", Encode.int categoryId )
+                , ( "itemId", Encode.int itemId )
+                ]
+        }
 
 
 
@@ -334,10 +350,9 @@ itemDecoder =
         |> required "likes" Decode.int
 
 
-
 getSelectedCategoryId : Model -> Int
 getSelectedCategoryId model =
-    model.selectedCategoryId 
+    model.selectedCategoryId
         |> Maybe.withDefault (getFirstCategory model)
 
 
@@ -352,11 +367,13 @@ getSelectedItem { portfolio, selectedItemId } selectedCategoryId =
                 |> List.filter (\i -> i.id == id && i.categoryId == selectedCategoryId)
                 |> List.head
 
+
 getFirstCategory { portfolio } =
     portfolio.categories
         |> List.head
         |> Maybe.map .id
         |> Maybe.withDefault 1
+
 
 apiUrl =
     "https://www.mocky.io/v2/5c77106130000059009d6136"

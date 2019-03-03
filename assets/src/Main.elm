@@ -11,13 +11,18 @@ import Json.Encode as Encode
 import Set
 
 
+
 {--Model
 The `initialModel` function initializes our `Model`. This function is called in `init` and outputs a `Model`
 --}
 
 
-initialModel : String -> Model
-initialModel url =
+initialModel : List LikedItem -> Model
+initialModel likedItems =
+    let
+        x =
+            Debug.log ""
+    in
     { errorMessage = ""
     , portfolio =
         { categories = []
@@ -25,7 +30,7 @@ initialModel url =
         }
     , selectedCategoryId = Nothing
     , selectedItemId = Nothing
-    , likedItems = []
+    , likedItems = likedItems
     }
 
 
@@ -34,7 +39,7 @@ type alias Model =
     , portfolio : Portfolio
     , selectedCategoryId : Maybe Int
     , selectedItemId : Maybe Int
-    , likedItems : List ( Int, Int )
+    , likedItems : List LikedItem
     }
 
 
@@ -60,16 +65,33 @@ type alias Item =
     }
 
 
+type alias LikedItem =
+    ( Int, Int )
+
+
 type alias LocalStorageRequest =
-    { method : String, payload : Encode.Value }
+    { method : String
+    , key : String
+    , value : Maybe Encode.Value
+    }
+
+
+type alias LocalStorageResponse =
+    { method : String
+    , payload : Encode.Value
+    }
 
 
 type alias ChannelRequest =
-    { event : String, payload : Encode.Value }
+    { event : String
+    , payload : Encode.Value
+    }
 
 
 type alias ChannelResponse =
-    { code : Int, response : Portfolio }
+    { code : Int
+    , response : Portfolio
+    }
 
 
 
@@ -136,6 +158,7 @@ viewCategoryButton selectedCategoryId category =
         buttonOnClick =
             if categorySelected then
                 []
+
             else
                 [ onClick (CategoryClicked category.id) ]
 
@@ -162,18 +185,20 @@ viewItems { portfolio, errorMessage, likedItems } selectedCategoryId selectedIte
             if String.isEmpty errorMessage then
                 div [ class "row items-container" ]
                     filteredItems
+
             else
                 viewError errorMessage
     in
     contents
 
 
-viewItem : List ( Int, Int ) -> Item -> Html Msg
+viewItem : List LikedItem -> Item -> Html Msg
 viewItem likedItems item =
     let
         iconset =
             if List.member ( item.categoryId, item.id ) likedItems then
                 "fas"
+
             else
                 "far"
     in
@@ -295,16 +320,20 @@ update msg model =
                 selectedCategoryId =
                     model.selectedCategoryId |> Maybe.withDefault 0
 
+                likedItem =
+                    ( selectedCategoryId, itemId )
+
                 itemIsLiked =
                     model.likedItems
                         |> List.member
                             ( selectedCategoryId, itemId )
 
-                ( cmds, updater ) =
+                ( toggleCmd, updater ) =
                     if itemIsLiked then
-                        ( unlikeItemChannelRequest selectedCategoryId itemId, removeLikedItem )
+                        ( unlikeItemChannelRequest likedItem, removeLikedItem )
+
                     else
-                        ( likeItemChannelRequest selectedCategoryId itemId, addLikedItem )
+                        ( likeItemChannelRequest likedItem, addLikedItem )
 
                 addLikedItem =
                     ( selectedCategoryId, itemId )
@@ -325,7 +354,12 @@ update msg model =
                         _ ->
                             { model | likedItems = updater }
             in
-            ( updatedModel, cmds )
+            ( updatedModel
+            , Cmd.batch
+                [ toggleCmd
+                , saveLikesToLocalStorage updatedModel.likedItems
+                ]
+            )
 
         None ->
             ( model, Cmd.none )
@@ -335,42 +369,30 @@ getPortfolioFromChannel =
     channelEventRequest { event = "get_items", payload = Encode.null }
 
 
-likeItemChannelRequest categoryId itemId =
+likeItemChannelRequest likedItem =
     channelEventRequest
         { event = "like_item"
-        , payload =
-            Encode.object
-                [ ( "categoryId", Encode.int categoryId )
-                , ( "itemId", Encode.int itemId )
-                ]
+        , payload = encodeLikedItem likedItem
         }
 
 
-unlikeItemChannelRequest categoryId itemId =
+unlikeItemChannelRequest likedItem =
     channelEventRequest
         { event = "unlike_item"
-        , payload =
-            Encode.object
-                [ ( "categoryId", Encode.int categoryId )
-                , ( "itemId", Encode.int itemId )
-                ]
+        , payload = encodeLikedItem likedItem
         }
 
 
 saveLikesToLocalStorage likedItems =
     localStorageRequest
         { method = "setItem"
-        , payload =
-            Encode.list <|
-                Encode.object
-                    [ ( "categoryId", Encode.int categoryId )
-                    , ( "itemId", Encode.int itemId )
-                    ]
+        , key = "likedItems"
+        , value = Just <| encodeLikedItemsForLocalStorage likedItems
         }
 
 
 
--- JSON Decoding
+-- JSON Decoders
 
 
 portfolioDecoder : Decoder Portfolio
@@ -400,6 +422,37 @@ itemDecoder =
         |> required "likes" Decode.int
 
 
+
+-- JSON Encoders --
+
+
+encodeLikedItems : List LikedItem -> Encode.Value
+encodeLikedItems likedItems =
+    Encode.list encodeLikedItem likedItems
+
+
+encodeLikedItem : LikedItem -> Encode.Value
+encodeLikedItem ( categoryId, itemId ) =
+    Encode.object
+        [ ( "categoryId", Encode.int categoryId )
+        , ( "itemId", Encode.int itemId )
+        ]
+
+
+encodeLikedItemsForLocalStorage : List LikedItem -> Encode.Value
+encodeLikedItemsForLocalStorage likedItems =
+    Encode.list encodeLikedItemForLocalStorage likedItems
+
+
+encodeLikedItemForLocalStorage : LikedItem -> Encode.Value
+encodeLikedItemForLocalStorage ( categoryId, itemId ) =
+    Encode.list Encode.int [ categoryId, itemId ]
+
+
+
+-- HELPERS --
+
+
 getSelectedCategoryId : Model -> Int
 getSelectedCategoryId model =
     model.selectedCategoryId
@@ -423,10 +476,6 @@ getFirstCategory { portfolio } =
         |> List.head
         |> Maybe.map .id
         |> Maybe.withDefault 1
-
-
-apiUrl =
-    "https://www.mocky.io/v2/5c77106130000059009d6136"
 
 
 port channelEventRequest : ChannelRequest -> Cmd msg
@@ -481,8 +530,8 @@ up. For now, we don't need to run any commands so we'll use Cmd.none here.
 --}
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( initialModel apiUrl
+init : List LikedItem -> ( Model, Cmd Msg )
+init likedItems =
+    ( initialModel likedItems
     , getPortfolioFromChannel
     )

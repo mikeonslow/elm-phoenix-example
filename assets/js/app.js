@@ -21,8 +21,16 @@ import { Elm } from "../src/Main.elm";
 (function () {
     var startup = function () {
         // Start the Elm App.
+
+        var initialLikedItems = [];
+
+        if(typeof localStorage.likedItems == 'string') {
+            initialLikedItems = JSON.parse(localStorage.likedItems);
+        }
+
         var app = Elm.Main.init({
-            node: document.getElementById('elm-main')
+            node: document.getElementById('elm-main'),
+            flags: initialLikedItems
         });
 
         app.ports.channelEventRequest.subscribe((request) => {
@@ -30,7 +38,12 @@ import { Elm } from "../src/Main.elm";
         });
 
         app.ports.localStorageRequest.subscribe((request) => {
-            localStorage[request.method] = request.payload;
+            if(request.value === null) {
+                localStorage[request.method](request.key);
+            } else {
+                localStorage[request.method](request.key, JSON.stringify(request.value));
+            }
+            console.log("localStorageRequest", request, localStorage);
         });
 
         let channel = socket.channel("portfolio:lobby", {});

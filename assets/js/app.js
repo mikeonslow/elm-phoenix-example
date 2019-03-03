@@ -29,6 +29,10 @@ import { Elm } from "../src/Main.elm";
             channel.push(request.event, request.payload);
         });
 
+        app.ports.localStorageRequest.subscribe((request) => {
+            localStorage[request.method] = request.payload;
+        });
+
         let channel = socket.channel("portfolio:lobby", {});
 
         channel.join()

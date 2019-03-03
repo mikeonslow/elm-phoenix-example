@@ -60,6 +60,10 @@ type alias Item =
     }
 
 
+type alias LocalStorageRequest =
+    { method : String, payload : Encode.Value }
+
+
 type alias ChannelRequest =
     { event : String, payload : Encode.Value }
 
@@ -232,6 +236,7 @@ This update function responds to messages (`Msg`), updating the model and return
 
 type Msg
     = HandleChannelResponse ChannelResponse
+    | HandleLocalStorageResponse LocalStorageResponse
     | CategoryClicked Int
     | ItemClicked Int
     | ToggleItemLiked Int
@@ -256,6 +261,13 @@ update msg model =
 
                         _ ->
                             model
+            in
+            ( updatedModel, Cmd.none )
+
+        HandleLocalStorageResponse channelResponse ->
+            let
+                updatedModel =
+                    model
             in
             ( updatedModel, Cmd.none )
 
@@ -345,6 +357,18 @@ unlikeItemChannelRequest categoryId itemId =
         }
 
 
+saveLikesToLocalStorage likedItems =
+    localStorageRequest
+        { method = "setItem"
+        , payload =
+            Encode.list <|
+                Encode.object
+                    [ ( "categoryId", Encode.int categoryId )
+                    , ( "itemId", Encode.int itemId )
+                    ]
+        }
+
+
 
 -- JSON Decoding
 
@@ -409,6 +433,9 @@ port channelEventRequest : ChannelRequest -> Cmd msg
 
 
 port channelEventResponse : (ChannelResponse -> msg) -> Sub msg
+
+
+port localStorageRequest : LocalStorageRequest -> Cmd msg
 
 
 

@@ -50,7 +50,7 @@ import { Elm } from "../src/Main.elm";
 
         channel.join()
             .receive("ok", resp => { console.log("Joined successfully", resp) })
-            .receive("error", resp => { console.log("Unable to join", resp) });
+            .receive("error", resp => { console.log("Unable to join", resp); });
 
         channel.on("get_items", payload => {
             console.log("get_items response...");
@@ -59,6 +59,11 @@ import { Elm } from "../src/Main.elm";
 
         channel.on("like_item", payload => {
             console.log("like_item response", payload);
+        });
+
+        channel.on("phx_error", payload => {
+            localStorage.removeItem('likedItems');
+            console.log("phx_error response", payload);
         });
     }
 

@@ -32,7 +32,7 @@ defmodule Elmfolio.Portfolio.Server do
 
   @impl true
   def handle_call(
-        {:like_item, %{"categoryId" => categoryId, "itemId" => itemId} = itemAndCategoryIds},
+        {:like_item, %{"categoryId" => _categoryId, "itemId" => _itemId} = itemAndCategoryIds},
         _from,
         state
       ) do
@@ -42,7 +42,7 @@ defmodule Elmfolio.Portfolio.Server do
 
   @impl true
   def handle_call(
-        {:unlike_item, %{"categoryId" => categoryId, "itemId" => itemId} = itemAndCategoryIds},
+        {:unlike_item, %{"categoryId" => _categoryId, "itemId" => _itemId} = itemAndCategoryIds},
         _from,
         state
       ) do
@@ -51,7 +51,7 @@ defmodule Elmfolio.Portfolio.Server do
   end
 
   @impl true
-  def handle_call({:unlike_item, %{"categoryId" => categoryId, "itemId" => itemId}}, _from, state) do
+  def handle_call({:unlike_item, _categoryAndItemIds}, _from, state) do
     {:reply, state, state}
   end
 
@@ -73,8 +73,8 @@ defmodule Elmfolio.Portfolio.Server do
   end
 
   defp like_item(
-         {200, %{"categories" => categories, "items" => items} = portfolio},
-         %{"categoryId" => categoryId, "itemId" => itemId} = categoryAndItemIds
+         {200, %{"categories" => _categories, "items" => items} = portfolio},
+         %{"categoryId" => _categoryId, "itemId" => _itemId} = categoryAndItemIds
        ) do
     {200,
      %{
@@ -85,7 +85,7 @@ defmodule Elmfolio.Portfolio.Server do
      }}
   end
 
-  defp like_item({500, portfolio} = state, _categoryAndItemId) do
+  defp like_item({500, _portfolio} = state, _categoryAndItemId) do
     state
   end
 
@@ -114,8 +114,8 @@ defmodule Elmfolio.Portfolio.Server do
   end
 
   defp unlike_item(
-         {200, %{"categories" => categories, "items" => items} = portfolio},
-         %{"categoryId" => categoryId, "itemId" => itemId} = categoryAndItemIds
+         {200, %{"categories" => _categories, "items" => items} = portfolio},
+         %{"categoryId" => _categoryId, "itemId" => _itemId} = categoryAndItemIds
        ) do
     {200,
      %{
@@ -126,11 +126,7 @@ defmodule Elmfolio.Portfolio.Server do
      }}
   end
 
-  defp unlike_item({500, portfolio} = state, _categoryAndItemId) do
+  defp unlike_item({500, _portfolio} = state, _categoryAndItemId) do
     state
   end
 end
-
-# Elmfolio.Portfolio.Server |> GenServer.call({:like_item, %{"categoryId" => 1, "itemId" => 1}})
-# Elmfolio.Portfolio.Server |> GenServer.call({:unlike_item, %{"categoryId" => 1, "itemId" => 1}})
-# Elmfolio.Portfolio.Server.get()

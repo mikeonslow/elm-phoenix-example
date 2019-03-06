@@ -1,7 +1,9 @@
 // We need to import the CSS so that webpack will load it.
 // The MiniCssExtractPlugin is used to separate it out into
 // its own CSS file.
-import css from "../css/app.css"
+
+// declare function require(name: string): string;
+// const css = require('../css/app.css');
 
 // webpack automatically bundles all modules in your
 // entry points. Those entry points can be configured
@@ -18,13 +20,15 @@ import socket from "./socket"
 
 import { Elm } from "../src/Main.elm";
 
+console.log('from typescript!!!');
+
 (function () {
     var startup = function () {
         // Start the Elm App.
 
         var initialLikedItems = [];
 
-        if(typeof localStorage.likedItems == 'string') {
+        if (typeof localStorage.likedItems == 'string') {
             initialLikedItems = JSON.parse(localStorage.likedItems);
         }
 
@@ -38,7 +42,7 @@ import { Elm } from "../src/Main.elm";
         });
 
         app.ports.localStorageRequest.subscribe((request) => {
-            if(request.value === null) {
+            if (request.value === null) {
                 localStorage[request.method](request.key);
             } else {
                 localStorage[request.method](request.key, JSON.stringify(request.value));

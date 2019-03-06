@@ -19,10 +19,6 @@ The `initialModel` function initializes our `Model`. This function is called in 
 
 initialModel : List LikedItem -> Model
 initialModel likedItems =
-    let
-        x =
-            Debug.log ""
-    in
     { errorMessage = ""
     , portfolio =
         { categories = []

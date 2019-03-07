@@ -11,7 +11,6 @@ import Json.Encode as Encode
 import Set
 
 
-
 {--Model
 The `initialModel` function initializes our `Model`. This function is called in `init` and outputs a `Model`
 --}
@@ -19,10 +18,6 @@ The `initialModel` function initializes our `Model`. This function is called in 
 
 initialModel : List LikedItem -> Model
 initialModel likedItems =
-    let
-        x =
-            Debug.log ""
-    in
     { errorMessage = ""
     , portfolio =
         { categories = []
@@ -158,7 +153,6 @@ viewCategoryButton selectedCategoryId category =
         buttonOnClick =
             if categorySelected then
                 []
-
             else
                 [ onClick (CategoryClicked category.id) ]
 
@@ -185,7 +179,6 @@ viewItems { portfolio, errorMessage, likedItems } selectedCategoryId selectedIte
             if String.isEmpty errorMessage then
                 div [ class "row items-container" ]
                     filteredItems
-
             else
                 viewError errorMessage
     in
@@ -198,7 +191,6 @@ viewItem likedItems item =
         iconset =
             if List.member ( item.categoryId, item.id ) likedItems then
                 "fas"
-
             else
                 "far"
     in
@@ -331,7 +323,6 @@ update msg model =
                 ( toggleCmd, updater ) =
                     if itemIsLiked then
                         ( unlikeItemChannelRequest likedItem, removeLikedItem )
-
                     else
                         ( likeItemChannelRequest likedItem, addLikedItem )
 
@@ -450,7 +441,11 @@ encodeLikedItemForLocalStorage ( categoryId, itemId ) =
 
 
 
--- HELPERS --
+-- Helpers --
+
+
+receiveChannelEventReponse response =
+    HandleChannelResponse response
 
 
 getSelectedCategoryId : Model -> Int
@@ -478,10 +473,23 @@ getFirstCategory { portfolio } =
         |> Maybe.withDefault 1
 
 
+
+-- Ports
+-- Generic port for an outbound channel request
+
+
 port channelEventRequest : ChannelRequest -> Cmd msg
 
 
+
+-- Generic port for an outbound channel response
+
+
 port channelEventResponse : (ChannelResponse -> msg) -> Sub msg
+
+
+
+-- Generic port for an outbound request to update localStorage
 
 
 port localStorageRequest : LocalStorageRequest -> Cmd msg
@@ -497,14 +505,11 @@ In Elm, using subscriptions is how your application can listen for external inpu
 
 In this application, we don't have a need for any active subscriptions so we add in Sub.none
 --}
+-- Inbound port messages are handled via `subscriptions`
 
 
 subscriptions _ =
     Sub.batch [ channelEventResponse receiveChannelEventReponse ]
-
-
-receiveChannelEventReponse response =
-    HandleChannelResponse response
 
 
 
